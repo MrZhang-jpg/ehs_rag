@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EHS 知识库问答</title>
+<style>
+  :root {
+    --accent: #4d6bfe;
+    --accent-strong: #3b5bfd;
+    --accent-soft: #eef2ff;
+    --bg: #ffffff;
+    --sidebar: #f7f8fa;
+    --line: #e9ebf0;
+    --line-soft: #f0f2f5;
+    --text: #1f2329;
+    --text-2: #56606e;
+    --text-3: #8d97a6;
+    --hover: #eceef2;
+    --active: #e7ebf7;
+    --bubble-user: #eaf0ff;
+    --card: #fbfbfc;
+    --danger: #d93025;
+    --radius: 14px;
+    --shadow: 0 6px 24px rgba(25, 35, 60, .08);
+    --font: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+            "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d8dbe2; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #c6cad3; }
+
+  /* ---------------- 布局 ---------------- */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ---------------- 侧边栏 ---------------- */
+  .sidebar {
+    width: 264px; flex: none; display: flex; flex-direction: column;
+    background: var(--sidebar); border-right: 1px solid var(--line);
+    padding: 14px 12px 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 4px 6px 14px; }
+  .brand-logo {
+    width: 30px; height: 30px; border-radius: 9px; flex: none;
+    background: linear-gradient(135deg, #5b7cff, #3b5bfd);
+    display: grid; place-items: center; color: #fff; font-size: 15px;
+    box-shadow: 0 3px 10px rgba(77, 107, 254, .35);
+  }
+  .brand-name { font-size: 15px; font-weight: 650; letter-spacing: .2px; }
+  .brand-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+  .new-chat {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; padding: 10px; margin-bottom: 14px;
+    border: none; border-radius: 11px; color: #fff; font-size: 13.5px;
+    font-weight: 560; background: linear-gradient(135deg, #5b7cff, #3b5bfd);
+    box-shadow: 0 4px 12px rgba(77, 107, 254, .28); transition: .18s;
+  }
+  .new-chat:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .new-chat:active { transform: translateY(0); }
+
+  .side-label {
+    font-size: 11.5px; color: var(--text-3); padding: 0 8px 6px;
+    letter-spacing: .3px;
+  }
+  .conv-list { flex: 1; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+  .conv {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border-radius: 10px; font-size: 13px; color: var(--text-2);
+    cursor: pointer; transition: background .15s; margin-bottom: 2px;
+  }
+  .conv:hover { background: var(--hover); }
+  .conv.active { background: var(--active); color: var(--text); font-weight: 560; }
+  .conv-title {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .conv-del {
+    flex: none; opacity: 0; border: none; background: none; color: var(--text-3);
+    font-size: 14px; line-height: 1; padding: 2px 3px; border-radius: 6px;
+  }
+  .conv:hover .conv-del { opacity: 1; }
+  .conv-del:hover { background: #e2e5ea; color: var(--danger); }
+  .conv-empty { font-size: 12.5px; color: var(--text-3); padding: 6px 10px; }
+
+  .side-foot { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 8px; }
+  .field { margin-bottom: 9px; }
+  .field label {
+    display: block; font-size: 11.5px; color: var(--text-3); margin: 0 0 5px 3px;
+  }
+  .field select, .field input {
+    width: 100%; padding: 7px 9px; font-size: 12.5px; color: var(--text);
+    background: #fff; border: 1px solid var(--line); border-radius: 9px;
+    outline: none; font-family: inherit;
+  }
+  .field select:focus, .field input:focus { border-color: #bfcafd; }
+  .stats {
+    display: flex; gap: 8px; font-size: 11.5px; color: var(--text-3);
+    padding: 2px 3px;
+  }
+  .stats b { color: var(--text-2); font-weight: 600; }
+
+  /* ---------------- 主区 ---------------- */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar {
+    height: 52px; flex: none; display: flex; align-items: center; gap: 10px;
+    padding: 0 22px; border-bottom: 1px solid var(--line-soft);
+  }
+  .topbar-title { font-size: 14px; font-weight: 600; }
+  .pill {
+    font-size: 11.5px; color: var(--accent); background: var(--accent-soft);
+    border-radius: 999px; padding: 3px 10px; font-weight: 560;
+  }
+  .spacer { flex: 1; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #c6cad3; }
+  .dot.ok { background: #34a853; } .dot.bad { background: #ea4335; }
+  .status-text { font-size: 12px; color: var(--text-3); }
+
+  .chat { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+  .chat-inner { max-width: 800px; margin: 0 auto; padding: 22px 24px 8px; }
+
+  /* 欢迎页 */
+  .welcome { padding: 6vh 0 0; text-align: center; }
+  .welcome-logo {
+    width: 58px; height: 58px; margin: 0 auto 18px; border-radius: 18px;
+    background: linear-gradient(135deg, #5b7cff, #3b5bfd); color: #fff;
+    display: grid; place-items: center; font-size: 27px;
+    box-shadow: 0 10px 26px rgba(77, 107, 254, .32);
+  }
+  .welcome h1 { font-size: 23px; margin: 0 0 8px; font-weight: 650; }
+  .welcome p { font-size: 13.5px; color: var(--text-2); margin: 0 0 30px; }
+  .cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    max-width: 610px; margin: 0 auto; text-align: left;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 15px; cursor: pointer; transition: .18s;
+  }
+  .card:hover {
+    background: #fff; border-color: #ccd6fd; box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .card b { display: block; font-size: 13.5px; margin-bottom: 5px; font-weight: 600; }
+  .card span { font-size: 12.5px; color: var(--text-3); line-height: 1.5; }
+
+  /* 消息 */
+  .msg { display: flex; gap: 12px; padding: 16px 0; }
+  .msg.user { justify-content: flex-end; }
+  .avatar {
+    width: 31px; height: 31px; border-radius: 50%; flex: none;
+    background: linear-gradient(135deg, #5b7cff, #3b5bfd); color: #fff;
+    display: grid; place-items: center; font-size: 14px; margin-top: 1px;
+    box-shadow: 0 3px 9px rgba(77, 107, 254, .3);
+  }
+  .bubble { max-width: 88%; font-size: 14.5px; line-height: 1.75; min-width: 0; }
+  .msg.user .bubble {
+    background: var(--bubble-user); border-radius: 14px 14px 4px 14px;
+    padding: 9px 14px; max-width: 76%; white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.assistant .bubble { flex: 1; }
+
+  .bubble p { margin: 0 0 9px; } .bubble p:last-child { margin-bottom: 0; }
+  .bubble ul, .bubble ol { margin: 6px 0 10px; padding-left: 22px; }
+  .bubble li { margin-bottom: 4px; }
+  .bubble h3, .bubble h4 { font-size: 14.5px; margin: 12px 0 6px; }
+  .bubble strong { font-weight: 650; }
+  .bubble code {
+    background: #f2f3f7; padding: 1.5px 5px; border-radius: 5px;
+    font-size: 13px; font-family: ui-monospace, Consolas, monospace;
+  }
+  .tag {
+    color: var(--accent); background: var(--accent-soft);
+    border-radius: 6px; padding: 1px 6px; font-size: 13px;
+  }
+
+  /* 来源 */
+  .sources { margin-top: 12px; }
+  .sources-head {
+    font-size: 12px; color: var(--text-3); margin-bottom: 7px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .src {
+    display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px;
+    color: var(--text-2); background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 11px; margin-bottom: 6px; line-height: 1.55;
+  }
+  .src-idx {
+    flex: none; width: 17px; height: 17px; border-radius: 5px; font-size: 11px;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-weight: 600; margin-top: 1px;
+  }
+  .src-file { color: var(--text); font-weight: 560; }
+  .src-meta { color: var(--text-3); }
+  details.ctx { margin-top: 4px; }
+  details.ctx summary {
+    font-size: 12px; color: var(--text-3); cursor: pointer; padding: 3px 0;
+    list-style: none;
+  }
+  details.ctx summary::-webkit-details-marker { display: none; }
+  details.ctx summary::before { content: "▸ "; }
+  details.ctx[open] summary::before { content: "▾ "; }
+  .ctx-body {
+    font-size: 12.5px; color: var(--text-2); background: #fafbfc;
+    border: 1px solid var(--line-soft); border-radius: 10px;
+    padding: 10px 12px; margin-top: 4px; max-height: 260px; overflow-y: auto;
+  }
+  .ctx-item { padding: 7px 0; border-bottom: 1px dashed var(--line); white-space: pre-wrap; }
+  .ctx-item:last-child { border-bottom: none; }
+  .ctx-item b { display: block; color: var(--text-3); font-size: 11.5px; font-weight: 500; margin-bottom: 3px; }
+
+  .msg-foot {
+    display: flex; align-items: center; gap: 12px; margin-top: 9px;
+    font-size: 11.5px; color: var(--text-3);
+  }
+  .act {
+    border: none; background: none; color: var(--text-3); font-size: 11.5px;
+    padding: 2px 6px; border-radius: 6px;
+  }
+  .act:hover { background: var(--hover); color: var(--text-2); }
+
+  /* 打字指示 */
+  .typing { display: inline-flex; gap: 5px; align-items: center; padding: 4px 0; }
+  .typing i {
+    width: 6px; height: 6px; border-radius: 50%; background: #b9c2d4;
+    animation: bounce 1.3s infinite ease-in-out;
+  }
+  .typing i:nth-child(2) { animation-delay: .17s; }
+  .typing i:nth-child(3) { animation-delay: .34s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-5px); opacity: 1; } }
+  .typing-text { font-size: 12.5px; color: var(--text-3); margin-left: 7px; }
+
+  .err {
+    color: var(--danger); background: #fdeceb; border: 1px solid #f7d4d1;
+    border-radius: 10px; padding: 9px 12px; font-size: 13px; line-height: 1.6;
+  }
+
+  /* ---------------- 输入区 ---------------- */
+  .composer { flex: none; padding: 6px 24px 16px; }
+  .composer-inner { max-width: 800px; margin: 0 auto; }
+  .input-wrap {
+    display: flex; align-items: flex-end; gap: 8px;
+    background: #fff; border: 1px solid var(--line); border-radius: 20px;
+    padding: 8px 8px 8px 16px; box-shadow: 0 2px 10px rgba(25, 35, 60, .05);
+    transition: border-color .18s, box-shadow .18s;
+  }
+  .input-wrap:focus-within {
+    border-color: #bfcafd; box-shadow: 0 4px 18px rgba(77, 107, 254, .13);
+  }
+  #input {
+    flex: 1; border: none; outline: none; resize: none; font-family: inherit;
+    font-size: 14.5px; line-height: 1.6; color: var(--text);
+    max-height: 168px; padding: 5px 0; background: transparent;
+  }
+  #input::placeholder { color: #a8b0bd; }
+  .send {
+    width: 34px; height: 34px; flex: none; border: none; border-radius: 50%;
+    background: linear-gradient(135deg, #5b7cff, #3b5bfd); color: #fff;
+    display: grid; place-items: center; transition: .18s;
+    box-shadow: 0 3px 9px rgba(77, 107, 254, .3);
+  }
+  .send:hover:not(:disabled) { filter: brightness(1.07); }
+  .send:disabled { background: #dfe3ea; box-shadow: none; cursor: not-allowed; }
+  .send svg { width: 17px; height: 17px; }
+  .hint { text-align: center; font-size: 11.5px; color: var(--text-3); margin-top: 9px; }
+  kbd {
+    background: #f2f3f7; border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-family: inherit;
+  }
+  @media (max-width: 720px) {
+    .sidebar { display: none; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🛡</div>
+      <div>
+        <div class="brand-name">EHS 知识助手</div>
+        <div class="brand-sub">法规 · 制度 · 操作规程</div>
+      </div>
+    </div>
+    <button class="new-chat" id="newChat">
+      <span style="font-size:15px;line-height:1">＋</span> 新建对话
+    </button>
+    <div class="side-label">历史对话</div>
+    <div class="conv-list" id="convList"></div>
+    <div class="side-foot">
+      <div class="field">
+        <label>检索模式</label>
+        <select id="modeSel">
+          <option value="hybrid_rerank">混合检索 + Rerank（推荐）</option>
+          <option value="hybrid">混合检索（向量 + BM25）</option>
+          <option value="vector">仅向量检索</option>
+          <option value="bm25">仅 BM25 关键词</option>
+        </select>
+      </div>
+      <!-- API-Key 对用户隐藏：输入框保留在 DOM 中，发送请求时 JS 仍读取它的值 -->
+      <div class="field" style="display:none">
+        <label>API-Key</label>
+        <input id="keyInput" type="password" value="ehs-demo-key-2026" />
+      </div>
+      <div class="stats" id="stats"><span>知识库：连接中…</span></div>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <div class="topbar">
+      <span class="topbar-title">EHS 知识库问答</span>
+      <span class="pill" id="modePill">混合检索 + Rerank</span>
+      <span class="spacer"></span>
+      <span class="dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">检测中</span>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="chat-inner">
+        <!-- 欢迎页 -->
+        <div class="welcome" id="welcome">
+          <div class="welcome-logo">🛡</div>
+          <h1>您好，我是 EHS 知识库助手</h1>
+          <p>基于企业安全法规与制度原文作答，答案附来源溯源</p>
+          <div class="cards" id="cards">
+            <div class="card" data-q="脚手架立杆垫板有什么要求？">
+              <b>脚手架检查要点</b><span>立杆垫板的材质与尺寸要求</span>
+            </div>
+            <div class="card" data-q="安全生产法规定从业人员有哪些义务？">
+              <b>从业人员义务</b><span>《安全生产法》相关条款</span>
+            </div>
+            <div class="card" data-q="动火作业前需要做哪些安全措施？">
+              <b>动火作业</b><span>作业前的审批与现场措施</span>
+            </div>
+            <div class="card" data-q="高处作业的坠落半径是多少？">
+              <b>高处作业</b><span>分级与坠落半径参数</span>
+            </div>
+          </div>
+        </div>
+        <!-- 消息列表 -->
+        <div id="msgs"></div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <div class="input-wrap">
+          <textarea id="input" rows="1" placeholder="请输入 EHS 问题，例如：脚手架垫板有什么要求？"></textarea>
+          <button class="send" id="send" title="发送">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7z" />
+            </svg>
+          </button>
+        </div>
+        <div class="hint">
+          <kbd>Enter</kbd> 发送 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行 ·
+          回答仅依据知识库原文，数值与条款以原文为准
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* ==================== 状态 ==================== */
+const LS = { convs: "ehs.convs.v1", cur: "ehs.cur.v1", mode: "ehs.mode.v1", key: "ehs.key.v1" };
+const $ = (id) => document.getElementById(id);
+const el = { chat: $("chat"), msgs: $("msgs"), welcome: $("welcome"), input: $("input"),
+             send: $("send"), newChat: $("newChat"), convList: $("convList"),
+             modeSel: $("modeSel"), keyInput: $("keyInput"), stats: $("stats"),
+             statusDot: $("statusDot"), statusText: $("statusText"), modePill: $("modePill") };
+
+const MODE_LABEL = { hybrid_rerank: "混合检索 + Rerank", hybrid: "混合检索",
+                     vector: "仅向量检索", bm25: "仅 BM25 关键词" };
+
+let state = { convs: [], cur: null, busy: false };
+
+/* ==================== 持久化 ==================== */
+function load() {
+  try { state.convs = JSON.parse(localStorage.getItem(LS.convs) || "[]"); } catch (e) { state.convs = []; }
+  state.cur = localStorage.getItem(LS.cur) || null;
+  const mode = localStorage.getItem(LS.mode) || "hybrid_rerank";
+  el.modeSel.value = mode;
+  el.keyInput.value = localStorage.getItem(LS.key) || "ehs-demo-key-2026";
+  if (!state.convs.some((c) => c.id === state.cur)) state.cur = state.convs[0] ? state.convs[0].id : null;
+}
+function save() {
+  try {
+    localStorage.setItem(LS.convs, JSON.stringify(state.convs));
+    localStorage.setItem(LS.cur, state.cur || "");
+    localStorage.setItem(LS.mode, el.modeSel.value);
+    localStorage.setItem(LS.key, el.keyInput.value);
+  } catch (e) { /* 隐私模式等场景忽略 */ }
+}
+const curConv = () => state.convs.find((c) => c.id === state.cur) || null;
+
+/* ==================== 轻量 Markdown ==================== */
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC[c]);
+const inlineFmt = (t) => t
+  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+  .replace(/`([^`]+)`/g, "<code>$1</code>")
+  .replace(/【([^】]{1,80})】/g, '<span class="tag">$1</span>');
+
+function md(src) {
+  const lines = esc(src).split(/\r?\n/);
+  const out = []; let para = []; let list = null;
+  const flushP = () => { if (para.length) { out.push("<p>" + para.join("<br>") + "</p>"); para = []; } };
+  const closeL = () => { if (list) { out.push("</" + list + ">"); list = null; } };
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, "");
+    // 空行不结束列表：模型常在编号项之间插空行，否则会被拆成多个 <ol> 而重新编号
+    if (!line.trim()) { flushP(); continue; }
+    let m;
+    if ((m = line.match(/^(#{1,4})\s+(.+)$/))) {
+      flushP(); closeL();
+      out.push("<h3>" + inlineFmt(m[2]) + "</h3>"); continue;
+    }
+    if ((m = line.match(/^\s*[-*•]\s+(.+)$/))) {
+      flushP(); if (list !== "ul") { closeL(); out.push("<ul>"); list = "ul"; }
+      out.push("<li>" + inlineFmt(m[1]) + "</li>"); continue;
+    }
+    if ((m = line.match(/^\s*(\d+)[.、)]\s+(.+)$/))) {
+      flushP(); if (list !== "ol") { closeL(); out.push("<ol>"); list = "ol"; }
+      out.push("<li>" + inlineFmt(m[2]) + "</li>"); continue;
+    }
+    closeL(); para.push(inlineFmt(line));
+  }
+  flushP(); closeL();
+  return out.join("");
+}
+
+/* ==================== 渲染 ==================== */
+function renderConvList() {
+  el.convList.innerHTML = "";
+  if (!state.convs.length) {
+    el.convList.innerHTML = '<div class="conv-empty">暂无历史对话</div>';
+    return;
+  }
+  for (const c of state.convs) {
+    const row = document.createElement("div");
+    row.className = "conv" + (c.id === state.cur ? " active" : "");
+    row.innerHTML = '<span style="opacity:.55;font-size:12px">💬</span>' +
+                    '<span class="conv-title"></span><button class="conv-del" title="删除">✕</button>';
+    row.querySelector(".conv-title").textContent = c.title || "新对话";
+    row.onclick = (e) => { if (e.target.classList.contains("conv-del")) return; switchConv(c.id); };
+    row.querySelector(".conv-del").onclick = (e) => { e.stopPropagation(); delConv(c.id); };
+    el.convList.appendChild(row);
+  }
+}
+
+function srcHTML(s, i) {
+  const bits = [s.section_title, s.page ? "第" + s.page + "页" : "", s.category]
+    .filter(Boolean).join(" · ");
+  return '<div class="src"><span class="src-idx">' + (i + 1) + "</span><div>" +
+         '<span class="src-file"></span>' +
+         (bits ? '<div class="src-meta"></div>' : "") + "</div></div>";
+}
+
+function ctxHTML(contexts) {
+  if (!contexts || !contexts.length) return "";
+  let inner = "";
+  contexts.forEach((c, i) => {
+    inner += '<div class="ctx-item"><b>片段 ' + (i + 1) + "</b>" + esc(c) + "</div>";
+  });
+  return '<details class="ctx"><summary>查看检索原文（' + contexts.length + " 段）</summary>" +
+         '<div class="ctx-body">' + inner + "</div></details>";
+}
+
+function msgNode(msg) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + msg.role;
+  if (msg.role === "user") {
+    const b = document.createElement("div");
+    b.className = "bubble"; b.textContent = msg.content;
+    wrap.appendChild(b);
+    return wrap;
+  }
+  const av = document.createElement("div");
+  av.className = "avatar"; av.textContent = "🛡";
+  const b = document.createElement("div");
+  b.className = "bubble";
+  if (msg.error) {
+    b.innerHTML = '<div class="err"></div>';
+    b.querySelector(".err").textContent = msg.content;
+  } else {
+    b.innerHTML = md(msg.content || "");
+    if (msg.sources && msg.sources.length) {
+      const box = document.createElement("div");
+      box.className = "sources";
+      box.innerHTML = '<div class="sources-head">📎 来源溯源（' + msg.sources.length + "）</div>";
+      msg.sources.forEach((s, i) => {
+        const d = document.createElement("div");
+        d.innerHTML = srcHTML(s, i);
+        d.querySelector(".src-file").textContent = s.file_name || "未知文件";
+        const meta = d.querySelector(".src-meta");
+        if (meta) {
+          const bits = [s.section_title, s.page ? "第" + s.page + "页" : "", s.category]
+            .filter(Boolean).join(" · ");
+          meta.textContent = bits;
+        }
+        box.appendChild(d);
+      });
+      b.appendChild(box);
+    }
+    b.insertAdjacentHTML("beforeend", ctxHTML(msg.contexts));
+    const foot = document.createElement("div");
+    foot.className = "msg-foot";
+    const copy = document.createElement("button");
+    copy.className = "act"; copy.textContent = "复制";
+    copy.onclick = () => {
+      const text = msg.content || "";
+      const done = () => { copy.textContent = "已复制 ✓"; setTimeout(() => (copy.textContent = "复制"), 1400); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(fallback);
+      } else { fallback(); }
+      function fallback() {
+        const ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch (e) { /* ignore */ }
+        document.body.removeChild(ta);
+      }
+    };
+    foot.appendChild(copy);
+    if (msg.latency) {
+      const t = document.createElement("span");
+      t.textContent = "耗时 " + msg.latency + "s";
+      foot.appendChild(t);
+    }
+    if (msg.mode) {
+      const t = document.createElement("span");
+      t.textContent = MODE_LABEL[msg.mode] || msg.mode;
+      foot.appendChild(t);
+    }
+    b.appendChild(foot);
+  }
+  wrap.appendChild(av); wrap.appendChild(b);
+  return wrap;
+}
+
+function renderMessages() {
+  const conv = curConv();
+  el.msgs.innerHTML = "";
+  if (!conv || !conv.messages.length) {
+    el.welcome.style.display = "";
+    return;
+  }
+  el.welcome.style.display = "none";
+  conv.messages.forEach((m) => el.msgs.appendChild(msgNode(m)));
+  scrollDown();
+}
+function scrollDown(force) {
+  const c = el.chat;
+  const near = c.scrollHeight - c.scrollTop - c.clientHeight < 220;
+  if (force || near) c.scrollTop = c.scrollHeight;
+}
+
+/* ==================== 对话管理 ==================== */
+function newConv() {
+  const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  state.convs.unshift({ id, title: "", messages: [] });
+  state.cur = id; save(); renderConvList(); renderMessages(); el.input.focus();
+  return id;
+}
+function switchConv(id) { state.cur = id; save(); renderConvList(); renderMessages(); }
+function delConv(id) {
+  state.convs = state.convs.filter((c) => c.id !== id);
+  if (state.cur === id) state.cur = state.convs[0] ? state.convs[0].id : null;
+  save(); renderConvList(); renderMessages();
+}
+
+/* ==================== 问答 ==================== */
+function setBusy(v) {
+  state.busy = v;
+  el.send.disabled = v;
+  el.input.disabled = v;
+  if (!v) el.input.focus();
+}
+
+async function ask(question) {
+  if (state.busy || !question.trim()) return;
+  if (!curConv()) newConv();
+  const conv = curConv();
+  conv.messages.push({ role: "user", content: question });
+  if (!conv.title) { conv.title = question.slice(0, 18); renderConvList(); }
+  save(); renderMessages(); scrollDown(true);
+
+  const holder = document.createElement("div");
+  holder.className = "msg assistant";
+  holder.innerHTML = '<div class="avatar">🛡</div><div class="bubble">' +
+    '<div class="typing"><i></i><i></i><i></i><span class="typing-text">检索与生成中…</span></div></div>';
+  el.msgs.appendChild(holder); scrollDown(true);
+
+  const t0 = Date.now();
+  const timer = setInterval(() => {
+    const s = ((Date.now() - t0) / 1000).toFixed(0);
+    const tp = holder.querySelector(".typing-text");
+    if (tp) tp.textContent = "检索与生成中… " + s + "s";
+  }, 1000);
+
+  const mode = el.modeSel.value;
+  let assistant;
+  try {
+    const resp = await fetch("/api/v1/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": el.keyInput.value.trim() },
+      body: JSON.stringify({ question, mode, return_contexts: true }),
+    });
+    if (resp.status === 401) throw new Error("API-Key 无效或已失效，请联系管理员。");
+    if (resp.status === 429) throw new Error("请求过于频繁（限流：每分钟 20 次），请稍后再试。");
+    if (resp.status === 504) throw new Error("问答处理超时，请稍后重试或简化问题。");
+    if (!resp.ok) {
+      let detail = "HTTP " + resp.status;
+      try { const j = await resp.json(); if (j.detail) detail = j.detail; } catch (e) { /* ignore */ }
+      throw new Error("服务返回错误：" + detail);
+    }
+    const data = await resp.json();
+    assistant = { role: "assistant", content: data.answer, sources: data.sources || [],
+                  contexts: data.contexts || [], latency: data.latency_seconds, mode: data.mode };
+  } catch (e) {
+    assistant = { role: "assistant", error: true,
+                  content: "请求失败：" + (e && e.message ? e.message : e) };
+  } finally {
+    clearInterval(timer);
+    holder.remove();
+  }
+  conv.messages.push(assistant);
+  save(); renderMessages(); scrollDown(true);
+}
+
+/* ==================== 服务状态 & 统计 ==================== */
+async function checkHealth() {
+  try {
+    const r = await fetch("/health", { cache: "no-store" });
+    const ok = r.ok;
+    el.statusDot.className = "dot " + (ok ? "ok" : "bad");
+    el.statusText.textContent = ok ? "服务正常" : "服务异常";
+  } catch (e) {
+    el.statusDot.className = "dot bad";
+    el.statusText.textContent = "服务不可达";
+  }
+}
+async function loadStats() {
+  try {
+    const r = await fetch("/api/v1/stats", { headers: { "X-API-Key": el.keyInput.value.trim() } });
+    if (!r.ok) throw new Error("stats " + r.status);
+    const s = await r.json();
+    el.stats.innerHTML = "<span>向量块 <b>" + (s.vectors ?? "-") + "</b></span>" +
+                         "<span>BM25 <b>" + (s.bm25 ?? "-") + "</b></span>" +
+                         "<span>文件 <b>" + (s.files ?? "-") + "</b></span>";
+  } catch (e) {
+    el.stats.innerHTML = "<span>知识库：暂不可用</span>";
+  }
+}
+
+/* ==================== 事件绑定 ==================== */
+el.newChat.onclick = () => newConv();
+el.modeSel.onchange = () => {
+  el.modePill.textContent = MODE_LABEL[el.modeSel.value] || el.modeSel.value;
+  save();
+};
+el.keyInput.onchange = () => { save(); loadStats(); };
+
+el.send.onclick = () => { const q = el.input.value; el.input.value = ""; autoGrow(); ask(q); };
+el.input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    const q = el.input.value; el.input.value = ""; autoGrow(); ask(q);
+  }
+});
+function autoGrow() {
+  el.input.style.height = "auto";
+  el.input.style.height = Math.min(el.input.scrollHeight, 168) + "px";
+}
+el.input.addEventListener("input", autoGrow);
+
+document.querySelectorAll(".card").forEach((c) => {
+  c.onclick = () => ask(c.dataset.q || c.textContent.trim());
+});
+
+/* ==================== 启动 ==================== */
+load();
+el.modePill.textContent = MODE_LABEL[el.modeSel.value] || el.modeSel.value;
+renderConvList();
+renderMessages();
+autoGrow();
+checkHealth();
+loadStats();
+setInterval(checkHealth, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+# EHS 知识库 RAG 问答系统依赖（cpu_default / CPU）
+# 版本对齐开发环境，安装：pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
+
+# ---- LangChain 核心 ----
+langchain==1.2.12
+langchain-core==1.6.2
+langchain-community==0.4.2
+langchain-text-splitters==1.1.2
+langchain-openai==1.6.0
+langchain-huggingface==1.2.2
+langchain-chroma==1.1.0
+# 本地生成后端（默认 provider=ollama）
+langchain-ollama==1.0.1
+
+# ---- 文档解析 ----
+pypdf==6.18.1
+pypdfium2==5.10.1
+pdfplumber>=0.11.0
+python-docx==1.2.0
+openpyxl>=3.1.0
+
+# ---- 嵌入 / Rerank（本地 CPU）----
+sentence-transformers==5.7.0
+torch==2.14.0
+huggingface-hub>=0.25.0
+
+# ---- 向量库 & 关键词检索 ----
+chromadb==1.5.9
+langchain-chroma==1.1.0
+# Milvus Lite（当前向量库后端，05_vector_store.py 依赖；缺失会导致向量检索整体失效）
+langchain-milvus==0.4.0
+pymilvus==3.0.2
+rank-bm25==0.2.2
+jieba==0.42.1
+
+# ---- LLM HTTP 客户端 ----
+openai==2.54.0
+
+# ---- 服务化 & 前端 ----
+fastapi>=0.110.0
+uvicorn>=0.29.0
+streamlit>=1.33.0
+pydantic>=2.0.0
+
+# ---- 缓存（Redis，可选；服务不可用时自动旁路，不影响问答）----
+redis>=5.0.0
+
+# ---- 工具 ----
+numpy<3.0
+tqdm>=4.66.0
+tenacity>=8.2.0
