@@ -79,13 +79,17 @@ if all(_is_model_cached(m) for m in _REQUIRED_LOCAL_MODELS):
 
 
 # ----------------------------------------------------------------------
-# 1) 路径配置
+# 路径配置
 # ----------------------------------------------------------------------
 # 项目根目录（本文件所在目录）
 PROJECT_ROOT: Path = Path(__file__).resolve().parent
 
-# 原始 EHS 知识库数据目录（D:\ehs_rag1）
-KNOWLEDGE_BASE_DIR: Path = Path(r"D:\ehs_rag1")
+# 原始 EHS 知识库数据目录：优先读环境变量 EHS_KB_ROOT，默认项目根目录 kb_data
+kb_env = os.getenv("EHS_KB_ROOT")
+if kb_env:
+    KNOWLEDGE_BASE_DIR: Path = Path(kb_env)
+else:
+    KNOWLEDGE_BASE_DIR: Path = PROJECT_ROOT / "kb_data"
 
 # 持久化产物目录
 DATA_DIR: Path = PROJECT_ROOT / "data"
@@ -98,6 +102,7 @@ LOGS_DIR: Path = PROJECT_ROOT / "logs"                    # 运行日志
 
 for _d in (DATA_DIR, VECTORSTORE_DIR, MILVUS_DIR, BM25_DIR, EVAL_DIR, LOGS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
+
 
 
 # ----------------------------------------------------------------------
